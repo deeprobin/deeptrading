@@ -1,0 +1,12 @@
+[package]
+name = "trade-core"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+async-trait = "0.1.53"
+futures = "0.3.21"
+serde = { version = "1.0.137", features = ["derive"] }
+chrono = { version = "0.4", features = ["serde"] }
+influxdb = { version = "0.5.2", features = ["derive", "use-serde"] }
+tokio = { version = "1.18.1", features = ["full"] }

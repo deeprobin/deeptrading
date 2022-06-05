@@ -1,0 +1,13 @@
+/target
+Cargo.lock
+/data
+.DS_Store
+node_modules
+/trade-web/build
+/trade-web/.svelte-kit
+/trade-web/package
+.env
+.env.*
+!.env.example
+.vercel
+.output

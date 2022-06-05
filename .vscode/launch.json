@@ -1,0 +1,44 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Python: Train Model",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/trade-ml/src/run.py",
+            "cwd": "${workspaceFolder}/trade-ml/src",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "args": [
+                "-m",
+                "train",
+                "-e",
+                "1"
+            ]
+        },
+        {
+            "name": "Rust: Test",
+            "type": "lldb",
+            "request": "launch",
+            "program": "${cargo:program}",
+            "console": "integratedTerminal",
+            "args": [
+                "test",
+                "--no-run",
+                "--lib"
+            ]
+        },
+        {
+            "name": "Launch Node",
+            "type": "lldb",
+            "request": "launch",
+            "program": "${cargo:program}",
+            "console": "integratedTerminal",
+            "args": [
+                "run",
+                "--bin",
+                "trade-noded"
+            ]
+        }
+    ]
+}

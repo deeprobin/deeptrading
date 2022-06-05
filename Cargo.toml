@@ -1,0 +1,2 @@
+[workspace]
+members = ["trade-core", "trade-host", "trade-node", "trade-protocol"]

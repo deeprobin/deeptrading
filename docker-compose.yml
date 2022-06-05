@@ -1,0 +1,111 @@
+version: "3.9"
+services:
+  host:
+    build:
+      context: .
+      dockerfile: ./docker/host.Dockerfile
+    environment:
+      - DTH_JAEGER_AGENT_ENDPOINT=jaeger:6831
+      - DTH_JAEGER_COLLECTOR_ENDPOINT=http://jaeger:14268/api/traces
+      - DTH_CERT_PATH=/var/trade-host/certs
+      - DTH_MISC_PATH=/var/trade-host/misc
+      - OTEL_EXPORTER_JAEGER_PROTOCOL=http/thrift.binary
+      - OTEL_EXPORTER_JAEGER_ENDPOINT=http://jaeger:14268/api/traces
+    ports:
+      - "4001:4001"
+    depends_on:
+      - jaeger
+    networks:
+      - deeptrading
+    volumes:
+      - "./data/host:/var/trade-host"
+  node:
+    build:
+      context: .
+      dockerfile: ./docker/node.Dockerfile
+    environment:
+      - DTN_JAEGER_AGENT_ENDPOINT=jaeger:6831
+      - DTN_JAEGER_COLLECTOR_ENDPOINT=http://jaeger:14268/api/traces
+      - OTEL_EXPORTER_JAEGER_PROTOCOL=http/thrift.binary
+      - OTEL_EXPORTER_JAEGER_ENDPOINT=http://jaeger:14268/api/traces
+      - DTN_HOST_ADDRESS=host
+      - DTN_HOST_PORT=4001
+      - DTN_LOCAL_ADDRESS=0.0.0.0
+      - DTN_LOCAL_PORT=4002
+    expose:
+      - 4002
+    deploy:
+      replicas: 2
+    depends_on:
+      - jaeger
+    networks:
+      - deeptrading
+  web:
+    restart: on-failure:3
+    build:
+      context: ./trade-web
+    ports:
+      - "8080:3000"
+  jaeger:
+    image: jaegertracing/all-in-one:latest
+    ports:
+      - "5775:5775/udp"
+      - "6831:6831/udp"
+      - "6832:6832/udp"
+      - "5778:5778"
+      - "16686:16686"
+      - "14268:14268"
+      - "9411:9411"
+    networks:
+      - deeptrading
+  grafana:
+    build:
+      context: ./docker/grafana/
+      dockerfile: grafana.Dockerfile
+    ports:
+      - "9000:3000"
+    volumes:
+      - "./data/grafana:/var/lib/grafana"
+    networks:
+      - deeptrading
+  prometheus:
+    image: prom/prometheus:latest
+    restart: unless-stopped
+    volumes:
+      - "./docker/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml"
+      - "./data/prometheus:/prometheus"
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--web.enable-lifecycle'
+    expose:
+      - 9090
+    ports:
+      - "9090:9090"
+    networks:
+      - deeptrading
+  node_exporter:
+    image: prom/node-exporter:latest
+    restart: unless-stopped
+    ports:
+      - "9100:9100"
+    expose:
+      - 9100
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    command:
+      - '--path.procfs=/host/proc'
+      - '--path.rootfs=/rootfs'
+      - '--path.sysfs=/host/sys'
+      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
+    networks:
+      - deeptrading
+
+networks:
+  deeptrading:
+    name: deeptrading
+    driver: bridge
